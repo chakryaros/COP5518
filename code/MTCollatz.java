@@ -41,8 +41,8 @@ public class MTCollatz {
     public static void main(String[] args)
     {
         
-        int Num = 10000;
-        int T = 8;
+        int Num = Integer.parseInt(args[0]);
+        int T = Integer.parseInt(args[1]);
         for (int i = 1; i < T+1; i++) {
 
             MultipleThreadCollatz object = new MultipleThreadCollatz(Num);
