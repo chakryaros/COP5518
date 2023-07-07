@@ -13,19 +13,25 @@ class SharedData
 {
     private int m_Count = 0;
     // Instantiating Lock object.
-    private ReentrantLock lock = new ReentrantLock();
+    private ReentrantLock lock;
+
+    public SharedData()
+    {
+           this.m_Count = 1;
+           this.lock = new ReentrantLock();
+    }
 
     // method to add count.
     public void incrementCountValue(int indexToIncrement, Thread thread, boolean useLock)
     {
         if(useLock)
         {
-            lock.lock();
+            this.lock.lock();
             try{
                 m_Count += 1;
             }
             finally {
-                lock.unlock();
+                this.lock.unlock();
             }
         }else{
             m_Count += 1;
@@ -38,12 +44,12 @@ class SharedData
         int tempCount;
         if(useLock)
         {
-            lock.lock();
+            this.lock.lock();
             try{
                 tempCount = m_Count;
             }
             finally {
-                lock.unlock();
+                this.lock.unlock();
             }
         }else{
             tempCount = m_Count;
@@ -72,18 +78,25 @@ class MultipleThreadCollatz extends Thread {
     public void run()
     {
         try {
-                int counter = 0;
-                while(m_num != 1)
+            // if the use lock is true, use lock else no lock.
+            if(m_UseLock)
+            {
+                System.out.println("Use Lock");
+                while(true)
                 {
-                    counter = counter + 1;
-                    System.out.println("Step: "+ counter + " Collatz Sequence: " + m_num);
-                    if(m_num % 2 != 0)
+                    int currentNum = m_SharedData.getCounterValue(this, m_UseLock);
+                    if (currentNum > m_num)
                     {
-                        m_num = ((3*m_num )+ 1);
-                    }else{
-                        m_num = m_num/2;
+                        break;
                     }
+                    int counter = CalculateCollatzLength(currentNum);
+                    m_SharedData.incrementCountValue(counter, this, m_UseLock);
                 }
+            }else
+            {
+                System.out.println("-noLock");
+                int counter = CalculateCollatzLength(m_num);
+            }
         }
         catch (Exception e) {
             System.out.println("Exception is caught");
@@ -92,22 +105,20 @@ class MultipleThreadCollatz extends Thread {
 
     private int CalculateCollatzLength(long num)
     {
-        int length = 0;
-        while (num > 1)
+        int counter = 1;
+        System.out.println("Step: "+ counter + " Collatz Sequence: " + num);
+        while(num != 1)
         {
-            if(num % 2 == 1)
+            if(num % 2 != 0)
             {
-                num = (num * 3) + 1;
-                System.out.println("Step: "+ length + " Collatz Sequence: " + num);
-            }
-            else
-            {
+                num = ((3* num )+ 1);
+            }else{
                 num = num/2;
-                System.out.println("Step: "+ length + " Collatz Sequence: " + num);
             }
-            length++;
+            counter = counter + 1;
+            System.out.println("Step: "+ counter + " Collatz Sequence: " + num);
         }
-        return length;
+        return counter;
     }
 }
 
@@ -117,10 +128,9 @@ public class MTCollatz {
     public static void main(String[] args)
     {
         
-        int Num = 6;
-        int T = 8;
-
-        //Apply lock
+        int MaxNum = Integer.parseInt(args[0]);
+        int T = Integer.parseInt(args[1]);
+        // Check for Lock.
         boolean useLock = true;
         if(args.length == 3 && args[2].equals("-nolock"))
         {
@@ -133,7 +143,7 @@ public class MTCollatz {
         SharedData sharedData = new SharedData();
         for (int i = 1; i < T+1; i++) {
 
-            MultipleThreadCollatz object = new MultipleThreadCollatz(Num, useLock, sharedData);
+            MultipleThreadCollatz object = new MultipleThreadCollatz(MaxNum, useLock, sharedData);
             object.start();
             System.out.println("Thread: "+ i);
             try
