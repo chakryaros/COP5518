@@ -18,12 +18,12 @@ class SharedData
 
     public SharedData()
     {
-           this.COUNTER = 1;
+           this.COUNTER = 2;
            this.lock = new ReentrantLock();
     }
 
     // method to add count.
-    public void incrementCountValue(int indexToIncrement, Thread thread, boolean useLock)
+    public void incrementCountValue(Thread thread, boolean useLock)
     {
         if(useLock)
         {
@@ -118,13 +118,14 @@ class MultipleThreadCollatz extends Thread {
                     {
                         break;
                     }
-                    int counter = CalculateCollatzLength(currentNum);
-                    m_SharedData.incrementCountValue(counter, this, m_UseLock);
+                    CalculateCollatzLength(m_num);
+                    m_SharedData.incrementCountValue(this, m_UseLock);
+                    m_SharedData.setArrayCollatzFrequecy(arrayCollatz);
                 }
-                m_SharedData.setArrayCollatzFrequecy(arrayCollatz);
+                
             }else
             {
-                int counter = CalculateCollatzLength(m_num);
+                CalculateCollatzLength(m_num);
                 m_SharedData.setArrayCollatzFrequecy(arrayCollatz);
             }
         }
@@ -133,7 +134,7 @@ class MultipleThreadCollatz extends Thread {
         }
     }
 
-    private int CalculateCollatzLength(long num)
+    private void CalculateCollatzLength(long num)
     {
         int counter = 0;
         arrayCollatz[counter] = num;
@@ -150,7 +151,6 @@ class MultipleThreadCollatz extends Thread {
             arrayCollatz[counter] = num;
             //System.out.println("Step: "+ counter + " Collatz Sequence: " + num);
         }
-        return counter;
     }
 }
 
@@ -192,9 +192,9 @@ public class MTCollatz {
 
         long[] arrayFreq = sharedData.getArrayCollatzFrequecy();
         // Print result of stopping time histogram to console.
-       for (int i = 0; i < arrayFreq.length; i++)
-       {
-           System.out.println("Stopping time: " + i + " Collatz Sequence: " + arrayFreq[i]);
-       }
+        for (int i = 0; i < arrayFreq.length; i++)
+        {
+            System.out.println("Stopping time: " + i + " Collatz Sequence: " + arrayFreq[i]);
+        }
     }
 }
