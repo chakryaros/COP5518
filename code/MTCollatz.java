@@ -11,13 +11,14 @@ import java.util.concurrent.locks.ReentrantLock;
 // A share data object.
 class SharedData
 {
-    private int m_Count = 0;
+    private int COUNTER = 0;
     // Instantiating Lock object.
     private ReentrantLock lock;
+    private long[] arrayCollatz;
 
     public SharedData()
     {
-           this.m_Count = 1;
+           this.COUNTER = 1;
            this.lock = new ReentrantLock();
     }
 
@@ -28,13 +29,13 @@ class SharedData
         {
             this.lock.lock();
             try{
-                m_Count += 1;
+                this.COUNTER += 1;
             }
             finally {
                 this.lock.unlock();
             }
         }else{
-            m_Count += 1;
+            this.COUNTER += 1;
         }
     }
 
@@ -46,15 +47,42 @@ class SharedData
         {
             this.lock.lock();
             try{
-                tempCount = m_Count;
+                tempCount = this.COUNTER;
             }
             finally {
                 this.lock.unlock();
             }
         }else{
-            tempCount = m_Count;
+            tempCount = this.COUNTER;
         }
         return tempCount;
+    }
+
+    // set array of collatz frequecy.
+    public void setArrayCollatzFrequecy(long[] arrayFreq)
+    {
+        
+        int countLength = 0;
+        for(int i = 0; i< arrayFreq.length; i++)
+        {
+            if(arrayFreq[i] != 0)
+            {
+                countLength += 1;
+            }
+        }
+
+        // initial the size of array.
+        this.arrayCollatz = new long[countLength];
+        for(int i = 0; i< countLength; i++)
+        {
+            arrayCollatz[i] = arrayFreq[i];
+        }
+    }
+
+    // method to get array of collatz frequecy.
+    public long[] getArrayCollatzFrequecy()
+    {
+        return this.arrayCollatz;
     }
 }
 
@@ -65,13 +93,15 @@ class MultipleThreadCollatz extends Thread {
     private SharedData m_SharedData;
     private int m_num;
     private boolean m_UseLock;
+    public long[] arrayCollatz;
 
     //Create constructor.
     public MultipleThreadCollatz(int num, boolean useLock, SharedData sharedData)
     {
-        m_num = num;
-        m_UseLock = useLock;
-        m_SharedData = sharedData;
+        this.m_num = num;
+        this.m_UseLock = useLock;
+        this.m_SharedData = sharedData;
+        this.arrayCollatz = new long[200];
     }
 
     @Override
@@ -81,7 +111,6 @@ class MultipleThreadCollatz extends Thread {
             // if the use lock is true, use lock else no lock.
             if(m_UseLock)
             {
-                System.out.println("Use Lock");
                 while(true)
                 {
                     int currentNum = m_SharedData.getCounterValue(this, m_UseLock);
@@ -92,10 +121,11 @@ class MultipleThreadCollatz extends Thread {
                     int counter = CalculateCollatzLength(currentNum);
                     m_SharedData.incrementCountValue(counter, this, m_UseLock);
                 }
+                m_SharedData.setArrayCollatzFrequecy(arrayCollatz);
             }else
             {
-                System.out.println("-noLock");
                 int counter = CalculateCollatzLength(m_num);
+                m_SharedData.setArrayCollatzFrequecy(arrayCollatz);
             }
         }
         catch (Exception e) {
@@ -105,8 +135,9 @@ class MultipleThreadCollatz extends Thread {
 
     private int CalculateCollatzLength(long num)
     {
-        int counter = 1;
-        System.out.println("Step: "+ counter + " Collatz Sequence: " + num);
+        int counter = 0;
+        arrayCollatz[counter] = num;
+        //System.out.println("Step: "+ counter + " Collatz Sequence: " + num);
         while(num != 1)
         {
             if(num % 2 != 0)
@@ -116,7 +147,8 @@ class MultipleThreadCollatz extends Thread {
                 num = num/2;
             }
             counter = counter + 1;
-            System.out.println("Step: "+ counter + " Collatz Sequence: " + num);
+            arrayCollatz[counter] = num;
+            //System.out.println("Step: "+ counter + " Collatz Sequence: " + num);
         }
         return counter;
     }
@@ -129,10 +161,10 @@ public class MTCollatz {
     {
         
         int MaxNum = Integer.parseInt(args[0]);
-        int T = Integer.parseInt(args[1]);
+        int ThreadNum = Integer.parseInt(args[1]);
         // Check for Lock.
         boolean useLock = true;
-        if(args.length == 3 && args[2].equals("-nolock"))
+        if(args.length == 3 && args[2].equals("[-nolock]"))
         {
             useLock = false;
         }else{
@@ -141,11 +173,11 @@ public class MTCollatz {
 
         // Instantiate shared data object.
         SharedData sharedData = new SharedData();
-        for (int i = 1; i < T+1; i++) {
+        for (int i = 0; i < ThreadNum; i++) {
 
             MultipleThreadCollatz object = new MultipleThreadCollatz(MaxNum, useLock, sharedData);
             object.start();
-            System.out.println("Thread: "+ i);
+            //System.out.println("Thread: "+ i);
             try
             {
                 object.join();
@@ -157,5 +189,12 @@ public class MTCollatz {
                                 "been caught" + ex);
             }
         }
+
+        long[] arrayFreq = sharedData.getArrayCollatzFrequecy();
+        // Print result of stopping time histogram to console.
+       for (int i = 0; i < arrayFreq.length; i++)
+       {
+           System.out.println("Stopping time: " + i + " Collatz Sequence: " + arrayFreq[i]);
+       }
     }
 }
