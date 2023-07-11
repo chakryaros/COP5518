@@ -22,7 +22,7 @@ class SharedData
     {
            this.COUNTER = 1;
            this.lock = new ReentrantLock();
-           this.arrayCounter = new int[200];
+           this.arrayCounter = new int[600];
 
     }
 
@@ -180,10 +180,8 @@ public class MTCollatz {
         double elapsedTime = Duration.between(start, end).toNanos() / 1000000000.0;
         System.err.printf(MaxNum +" " + NumThread + " Time elapsed: %.9f%n", elapsedTime);
 
-    
         sharedData.printStopTime();
         // array of stopping time.
         int[] output = sharedData.arrayCounter;
-
     }
 }
