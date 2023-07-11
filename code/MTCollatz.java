@@ -179,6 +179,6 @@ public class MTCollatz {
         
         Instant end = Instant.now();
         double elapsedTime = Duration.between(start, end).toNanos() / 1000000000.0;
-        System.err.printf("Time elapsed: %.9f%n", elapsedTime);
+        System.err.printf("%d, %d, %.9f%n", MaxNum, NumThread, elapsedTime);
     }
 }
