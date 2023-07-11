@@ -7,8 +7,8 @@
 */
 
 import java.util.concurrent.locks.ReentrantLock;
-import java.time.Instant;
-
+import java.time.*;
+import java.lang.Thread;
 
 // A share data object.
 class SharedData
@@ -22,7 +22,8 @@ class SharedData
     {
            this.COUNTER = 1;
            this.lock = new ReentrantLock();
-           this.arrayCounter = new int[600];
+           this.arrayCounter = new int[200];
+
     }
 
     // method to add count.
@@ -94,10 +95,13 @@ class MultipleThreadCollatz extends Thread {
     public void run()
     {
         try {
-            
-            for(int i = 0; i < m_num; i++)
+                while(true)
                 {
                     int currentNum = m_SharedData.getCounterValue(this, m_UseLock);
+                    if (currentNum > this.m_num)
+                    {
+                       break;
+                    }
                     int stoppingTime = CalculateCollatzLength(currentNum);
                     m_SharedData.incrementCountValue(stoppingTime, this, m_UseLock);
                 }
@@ -130,8 +134,6 @@ public class MTCollatz {
     public static void main(String[] args)
     {
 
-        Instant start = Instant.now();
-        
         int MaxNum = Integer.parseInt(args[0]);
         int NumThread = Integer.parseInt(args[1]);
         // Check for Lock.
@@ -148,6 +150,9 @@ public class MTCollatz {
 
         // Instantiate shared data object.
         SharedData sharedData = new SharedData();
+
+         // start time.
+        Instant start = Instant.now();
         for (int i = 0; i < NumThread; i++) {
 
             threads[i] = new MultipleThreadCollatz(MaxNum, useLock, sharedData);
@@ -170,14 +175,15 @@ public class MTCollatz {
             }
         }
 
+        // End time.
         Instant end = Instant.now();
-        //double elapsedTime = Duration.between(start, end).toNanos() / 1000000000.0;
-        //System.err.printf("Time elapsed: %.9f%n", elapsedTime);
+        double elapsedTime = Duration.between(start, end).toNanos() / 1000000000.0;
+        System.err.printf(MaxNum +" " + NumThread + " Time elapsed: %.9f%n", elapsedTime);
 
-        // Print result of stopping time histogram to console.
-       sharedData.printStopTime();
-
+    
+        sharedData.printStopTime();
         // array of stopping time.
-       int[] output = sharedData.arrayCounter;
+        int[] output = sharedData.arrayCounter;
+
     }
 }
