@@ -7,7 +7,8 @@
 */
 
 import java.util.concurrent.locks.ReentrantLock;
-import java.time.Instant;
+import java.time.*;
+import java.lang.Thread;
 
 
 // A share data object.
@@ -170,14 +171,14 @@ public class MTCollatz {
             }
         }
 
-        Instant end = Instant.now();
-        //double elapsedTime = Duration.between(start, end).toNanos() / 1000000000.0;
-        //System.err.printf("Time elapsed: %.9f%n", elapsedTime);
-
         // Print result of stopping time histogram to console.
        sharedData.printStopTime();
 
         // array of stopping time.
        int[] output = sharedData.arrayCounter;
+        
+        Instant end = Instant.now();
+        double elapsedTime = Duration.between(start, end).toNanos() / 1000000000.0;
+        System.err.printf("Time elapsed: %.9f%n", elapsedTime);
     }
 }
