@@ -6,7 +6,8 @@
 
 */
 
-import java.util.concurrent.locks.ReentrantLock; 
+import java.util.concurrent.locks.ReentrantLock;
+
 
 // A share data object.
 class SharedData
@@ -14,27 +15,30 @@ class SharedData
     private int COUNTER = 0;
     // Instantiating Lock object.
     private ReentrantLock lock;
-    private long[] arrayCollatz;
+    public int [] arrayCounter;
 
     public SharedData()
     {
-           this.COUNTER = 2;
+           this.COUNTER = 1;
            this.lock = new ReentrantLock();
+           this.arrayCounter = new int[600];
     }
 
     // method to add count.
-    public void incrementCountValue(Thread thread, boolean useLock)
+    public void incrementCountValue(int stopTime, Thread thread, boolean useLock)
     {
         if(useLock)
         {
             this.lock.lock();
             try{
+                this.arrayCounter[this.COUNTER] = stopTime;
                 this.COUNTER += 1;
             }
             finally {
                 this.lock.unlock();
             }
         }else{
+            this.arrayCounter[this.COUNTER] = stopTime;
             this.COUNTER += 1;
         }
     }
@@ -58,31 +62,14 @@ class SharedData
         return tempCount;
     }
 
-    // set array of collatz frequecy.
-    public void setArrayCollatzFrequecy(long[] arrayFreq)
+    // print the stopping time.
+    public void printStopTime()
     {
-        
-        int countLength = 0;
-        for(int i = 0; i< arrayFreq.length; i++)
+        System.out.println("Printing the stopping time.");
+        for(int i = 1; i < arrayCounter.length; i++)
         {
-            if(arrayFreq[i] != 0)
-            {
-                countLength += 1;
-            }
+            System.out.println((i) + " Stopping time: " + arrayCounter[i]);
         }
-
-        // initial the size of array.
-        this.arrayCollatz = new long[countLength];
-        for(int i = 0; i< countLength; i++)
-        {
-            arrayCollatz[i] = arrayFreq[i];
-        }
-    }
-
-    // method to get array of collatz frequecy.
-    public long[] getArrayCollatzFrequecy()
-    {
-        return this.arrayCollatz;
     }
 }
 
@@ -93,7 +80,6 @@ class MultipleThreadCollatz extends Thread {
     private SharedData m_SharedData;
     private int m_num;
     private boolean m_UseLock;
-    public long[] arrayCollatz;
 
     //Create constructor.
     public MultipleThreadCollatz(int num, boolean useLock, SharedData sharedData)
@@ -101,44 +87,28 @@ class MultipleThreadCollatz extends Thread {
         this.m_num = num;
         this.m_UseLock = useLock;
         this.m_SharedData = sharedData;
-        this.arrayCollatz = new long[200];
     }
 
     @Override
     public void run()
     {
         try {
-            // if the use lock is true, use lock else no lock.
-            if(m_UseLock)
-            {
-                while(true)
+            
+            for(int i = 0; i < m_num; i++)
                 {
                     int currentNum = m_SharedData.getCounterValue(this, m_UseLock);
-                    if (currentNum > m_num)
-                    {
-                        break;
-                    }
-                    CalculateCollatzLength(m_num);
-                    m_SharedData.incrementCountValue(this, m_UseLock);
-                    m_SharedData.setArrayCollatzFrequecy(arrayCollatz);
+                    int stoppingTime = CalculateCollatzLength(currentNum);
+                    m_SharedData.incrementCountValue(stoppingTime, this, m_UseLock);
                 }
-                
-            }else
-            {
-                CalculateCollatzLength(m_num);
-                m_SharedData.setArrayCollatzFrequecy(arrayCollatz);
-            }
         }
         catch (Exception e) {
             System.out.println("Exception is caught");
         }
     }
 
-    private void CalculateCollatzLength(long num)
+    private int CalculateCollatzLength(int num)
     {
         int counter = 0;
-        arrayCollatz[counter] = num;
-        //System.out.println("Step: "+ counter + " Collatz Sequence: " + num);
         while(num != 1)
         {
             if(num % 2 != 0)
@@ -148,9 +118,8 @@ class MultipleThreadCollatz extends Thread {
                 num = num/2;
             }
             counter = counter + 1;
-            arrayCollatz[counter] = num;
-            //System.out.println("Step: "+ counter + " Collatz Sequence: " + num);
         }
+        return counter;
     }
 }
 
@@ -161,7 +130,7 @@ public class MTCollatz {
     {
         
         int MaxNum = Integer.parseInt(args[0]);
-        int ThreadNum = Integer.parseInt(args[1]);
+        int NumThread = Integer.parseInt(args[1]);
         // Check for Lock.
         boolean useLock = true;
         if(args.length == 3 && args[2].equals("[-nolock]"))
@@ -171,30 +140,37 @@ public class MTCollatz {
             useLock = true;
         }
 
+        //Instantiate multiple thread
+        Thread[] threads = new MultipleThreadCollatz[NumThread];
+
         // Instantiate shared data object.
         SharedData sharedData = new SharedData();
-        for (int i = 0; i < ThreadNum; i++) {
+        for (int i = 0; i < NumThread; i++) {
 
-            MultipleThreadCollatz object = new MultipleThreadCollatz(MaxNum, useLock, sharedData);
-            object.start();
-            //System.out.println("Thread: "+ i);
-            try
-            {
-                object.join();
-            }
-  
-            catch(Exception ex)
+            threads[i] = new MultipleThreadCollatz(MaxNum, useLock, sharedData);
+            threads[i].start();
+            System.out.println("Thread: "+ i);
+        }
+
+        // Join all threads
+       for (int i = 0; i < NumThread; i++)
+       {
+           try
+           {
+               threads[i].join();
+               System.out.println("Thread join: "+ i);
+           }
+           catch(Exception ex)
             {
                 System.out.println("Exception has " +
                                 "been caught" + ex);
             }
-        }
+       }
 
-        long[] arrayFreq = sharedData.getArrayCollatzFrequecy();
         // Print result of stopping time histogram to console.
-        for (int i = 0; i < arrayFreq.length; i++)
-        {
-            System.out.println("Stopping time: " + i + " Collatz Sequence: " + arrayFreq[i]);
-        }
+       sharedData.printStopTime();
+
+        // array of stopping time.
+       int[] output = sharedData.arrayCounter;
     }
 }
