@@ -159,6 +159,8 @@ class MultipleThreadCollatz extends Thread {
 public class MTCollatz {
     public static void main(String[] args)
     {
+
+        Instant start = Instant.now();
         
         int MaxNum = Integer.parseInt(args[0]);
         int ThreadNum = Integer.parseInt(args[1]);
@@ -196,5 +198,9 @@ public class MTCollatz {
         {
             System.out.println("Stopping time: " + i + " Collatz Sequence: " + arrayFreq[i]);
         }
+
+        Instant end = Instant.now();
+        double elapsedTime = Duration.between(start, end).toNanos() / 1000000000.0;
+        System.err.printf("Time elapsed: %.9f%n", elapsedTime);
     }
 }
