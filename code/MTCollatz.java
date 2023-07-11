@@ -7,6 +7,7 @@
 */
 
 import java.util.concurrent.locks.ReentrantLock;
+import java.time.Instant;
 
 
 // A share data object.
@@ -128,6 +129,8 @@ class MultipleThreadCollatz extends Thread {
 public class MTCollatz {
     public static void main(String[] args)
     {
+
+        Instant start = Instant.now();
         
         int MaxNum = Integer.parseInt(args[0]);
         int NumThread = Integer.parseInt(args[1]);
@@ -152,20 +155,24 @@ public class MTCollatz {
             System.out.println("Thread: "+ i);
         }
 
-        // Join all threads
-       for (int i = 0; i < NumThread; i++)
-       {
-           try
-           {
+         // Join all threads
+        for (int i = 0; i < NumThread; i++)
+        {
+            try
+            {
                threads[i].join();
                System.out.println("Thread join: "+ i);
-           }
-           catch(Exception ex)
+            }
+            catch(Exception ex)
             {
                 System.out.println("Exception has " +
                                 "been caught" + ex);
             }
-       }
+        }
+
+        Instant end = Instant.now();
+        //double elapsedTime = Duration.between(start, end).toNanos() / 1000000000.0;
+        //System.err.printf("Time elapsed: %.9f%n", elapsedTime);
 
         // Print result of stopping time histogram to console.
        sharedData.printStopTime();
