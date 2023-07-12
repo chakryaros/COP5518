@@ -70,7 +70,7 @@ class SharedData
     // method to print the stopping time.
     public void printStopTime()
     {
-        System.out.println("Printing the stopping time.");
+        System.out.println("Printing the stopping times and their frequencies.");
         for(int i = 1; i < arrayCounter.length; i++)
         {
             System.out.println((i) + ", " + arrayCounter[i]);
@@ -166,7 +166,7 @@ class MTCollatz extends Thread {
         {
             threads[i] = new MTCollatz(MaxNum, useLock, sharedData);
             threads[i].start();
-            System.out.println("Thread: "+ i);
+            System.err.println("Thread: "+ i);
         }
 
         // join all threads.
@@ -175,11 +175,11 @@ class MTCollatz extends Thread {
             try
             {
                threads[i].join();
-               System.out.println("Thread join: "+ i);
+               System.err.println("Thread join: "+ i);
             }
             catch(Exception ex)
             {
-                System.out.println("Exception has " +
+                System.err.println("Exception has " +
                                 "been caught" + ex);
             }
         }
