@@ -5,7 +5,7 @@
             Trevor Robinson
 
 */
-
+// import libraries
 import java.util.concurrent.locks.ReentrantLock;
 import java.time.*;
 import java.lang.Thread;
@@ -13,42 +13,45 @@ import java.lang.Thread;
 // A share data object.
 class SharedData
 {
-    private int COUNTER = 0;
+    // long counter variable to allow testing of larger numbers
+    private long COUNTER;
     // Instantiating Lock object.
     private ReentrantLock lock;
+    // array to store stopping times
     public int [] arrayCounter;
 
+    // default constructor
     public SharedData()
     {
            this.COUNTER = 1;
            this.lock = new ReentrantLock();
-           this.arrayCounter = new int[600];
+           this.arrayCounter = new int[1000];
 
     }
 
-    // method to add count.
+    // method to add count and using locks.
     public void incrementCountValue(int stopTime, Thread thread, boolean useLock)
     {
         if(useLock)
         {
             this.lock.lock();
             try{
-                this.arrayCounter[this.COUNTER] = stopTime;
+                this.arrayCounter[stopTime] += 1;
                 this.COUNTER += 1;
             }
             finally {
                 this.lock.unlock();
             }
         }else{
-            this.arrayCounter[this.COUNTER] = stopTime;
+            this.arrayCounter[stopTime] += 1;
             this.COUNTER += 1;
         }
     }
 
-    // method to get count.
-    public int getCounterValue(Thread thread, boolean useLock)
+    // method to get count using locks.
+    public long getCounterValue(Thread thread, boolean useLock)
     {
-        int tempCount;
+        long tempCount;
         if(useLock)
         {
             this.lock.lock();
@@ -64,40 +67,43 @@ class SharedData
         return tempCount;
     }
 
-    // print the stopping time.
+    // method to print the stopping time.
     public void printStopTime()
     {
         System.out.println("Printing the stopping time.");
         for(int i = 1; i < arrayCounter.length; i++)
         {
-            System.out.println((i) + " Stopping time: " + arrayCounter[i]);
+            System.out.println((i) + ", " + arrayCounter[i]);
         }
     }
 }
 
 // MultipleThreadCollatz object and inheritance from Thread class.
-class MultipleThreadCollatz extends Thread {
+class MTCollatz extends Thread {
 
-    // Class attribute.
+    // Class attributes.
     private SharedData m_SharedData;
+    // variable to store max number N
     private int m_num;
+    // variable to store whether or not a lock is to be used
     private boolean m_UseLock;
 
-    //Create constructor.
-    public MultipleThreadCollatz(int num, boolean useLock, SharedData sharedData)
+    // overload constructor.
+    public MTCollatz(int num, boolean useLock, SharedData sharedData)
     {
         this.m_num = num;
         this.m_UseLock = useLock;
         this.m_SharedData = sharedData;
     }
 
+    // run method to run code using thread
     @Override
     public void run()
     {
         try {
                 while(true)
                 {
-                    int currentNum = m_SharedData.getCounterValue(this, m_UseLock);
+                    long currentNum = m_SharedData.getCounterValue(this, m_UseLock);
                     if (currentNum > this.m_num)
                     {
                        break;
@@ -111,33 +117,37 @@ class MultipleThreadCollatz extends Thread {
         }
     }
 
-    private int CalculateCollatzLength(int num)
+    // method to calculate Collatz sequence stopping time occurences
+    private int CalculateCollatzLength(long currentNum)
     {
         int counter = 0;
-        while(num != 1)
+        while(currentNum != 1)
         {
-            if(num % 2 != 0)
+            if(currentNum % 2 != 0)
             {
-                num = ((3* num )+ 1);
+                currentNum = ((3* currentNum )+ 1);
             }else{
-                num = num/2;
+                currentNum = currentNum/2;
             }
             counter = counter + 1;
         }
         return counter;
     }
-}
 
-
-// Main Class
-public class MTCollatz {
+    // main method to test the program
     public static void main(String[] args)
     {
-
+    	 // obtain start time of program.
+        Instant start = Instant.now();
+        
+        // obtain command-line arguments for N and T
         int MaxNum = Integer.parseInt(args[0]);
         int NumThread = Integer.parseInt(args[1]);
+        
         // Check for Lock.
         boolean useLock = true;
+        
+        // if the 3rd command-line argument is no lock, do not use a lock
         if(args.length == 3 && args[2].equals("[-nolock]"))
         {
             useLock = false;
@@ -145,22 +155,21 @@ public class MTCollatz {
             useLock = true;
         }
 
-        //Instantiate multiple thread
-        Thread[] threads = new MultipleThreadCollatz[NumThread];
+        //Instantiate multiple threads given a number "T"
+        Thread[] threads = new MTCollatz[NumThread];
 
         // Instantiate shared data object.
         SharedData sharedData = new SharedData();
 
-         // start time.
-        Instant start = Instant.now();
-        for (int i = 0; i < NumThread; i++) {
-
-            threads[i] = new MultipleThreadCollatz(MaxNum, useLock, sharedData);
+        // create threads and run the code in the run method for each.
+        for (int i = 0; i < NumThread; i++) 
+        {
+            threads[i] = new MTCollatz(MaxNum, useLock, sharedData);
             threads[i].start();
             System.out.println("Thread: "+ i);
         }
 
-         // Join all threads
+        // join all threads.
         for (int i = 0; i < NumThread; i++)
         {
             try
@@ -174,14 +183,15 @@ public class MTCollatz {
                                 "been caught" + ex);
             }
         }
-
-        // End time.
+        
+        // obtain time of program ending.
         Instant end = Instant.now();
-        double elapsedTime = Duration.between(start, end).toNanos() / 1000000000.0;
-        System.err.printf(MaxNum +" " + NumThread + " Time elapsed: %.9f%n", elapsedTime);
-
+        
+        // print data obtained by threads
         sharedData.printStopTime();
-        // array of stopping time.
-        int[] output = sharedData.arrayCounter;
+        
+        // calculate and display time elapsed during runtime.
+        double elapsedTime = Duration.between(start, end).toNanos() / 1000000000.0;
+        System.err.printf(MaxNum + ", " + NumThread + ", Time elapsed: %.9f%n", elapsedTime);
     }
 }
